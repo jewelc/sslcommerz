@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include sslcommerz *.css
+recursive-include sslcommerz *.csv
+recursive-include sslcommerz *.html
+recursive-include sslcommerz *.ico
+recursive-include sslcommerz *.js
+recursive-include sslcommerz *.json
+recursive-include sslcommerz *.md
+recursive-include sslcommerz *.png
+recursive-include sslcommerz *.py
+recursive-include sslcommerz *.svg
+recursive-include sslcommerz *.txt
+recursive-exclude sslcommerz *.pyc
