@@ -97,6 +97,10 @@ app_license = "MIT"
 #	}
 # }
 
+website_route_rules = [
+	{"from_route": "/order-details/<path:name>", "to_route": "order_details"}
+]
+
 # Scheduled Tasks
 # ---------------
 

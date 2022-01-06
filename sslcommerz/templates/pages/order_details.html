@@ -1,0 +1,594 @@
+{% extends "templates/web.html" %}
+{% from "erpnext/templates/includes/order/order_macros.html" import item_name_and_description %}
+
+{% block breadcrumbs %}
+	{% include "templates/includes/breadcrumbs.html" %}
+{% endblock %}
+
+{% block title %}{{ doc.name }}{% endblock %}
+	{% block style %}
+	<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css" />
+{% endblock %}
+{% block header %}
+
+	<h2 class="m-0">{{ doc.name }}
+	</h2>
+	<div class="col-6 text-muted  small pt-3" style="padding-left:0">
+		<i class="fa fa-calendar"></i>
+			{{ frappe.utils.format_date(doc.transaction_date, 'medium') }}
+			{% if doc.valid_till %}
+			<p>
+			{{ _("Valid Till") }}: {{ frappe.utils.format_date(doc.valid_till, 'medium') }}
+			</p>
+			{% endif %}
+		</div>
+{% endblock %}
+
+{% block header_actions %}
+	<div class="dropdown">
+		<button class="btn btn-outline-secondary dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+			<span class="font-md">{{ _('Actions') }}</span>
+			<b class="caret"></b>
+		</button>
+		<ul class="dropdown-menu dropdown-menu-right" role="menu">
+			{% if doc.doctype == 'Purchase Order' %}
+				<a class="dropdown-item" href="/api/method/erpnext.buying.doctype.purchase_order.purchase_order.make_purchase_invoice_from_portal?purchase_order_name={{ doc.name }}" data-action="make_purchase_invoice">{{ _("Make Purchase Invoice") }}</a>
+			{% endif %}
+			<a class="dropdown-item" href='/printview?doctype={{ doc.doctype}}&name={{ doc.name }}&format={{ print_format }}'
+				target="_blank" rel="noopener noreferrer">
+				{{ _("Print") }}
+			</a>
+		</ul>
+	</div>
+{% endblock %}
+
+{% block page_content %}
+<div class="row">
+	<div class="col-md-8 mobile-pad-0">
+		<div class="order-left-panel">
+	<div class="costeps row no-gutters">
+        		<div class="order-progress-bar">
+          
+	<div class="col-md-3 costep active" data-step="cart">
+		<a class="costep-link" >
+			<i class="costep-icon"></i>
+			<span class="costep-label">Placed</span>
+		</a>
+	</div>
+
+<div class="col-md-3 costep {%if doc.status=='Completed' or doc.status=='To Deliver'%}active{%endif%}" data-step="address">
+  <a class="costep-link" >
+    <i class="costep-icon"></i>
+    <span class="costep-label">Payment</span>
+  </a>
+</div>
+
+	<div class="col-md-3 costep   {%if flow_status=='Delivered' or flow_status=='Delivery In Progress' or flow_status=='In Progress'%}active{%endif%}" data-step="payment">
+		<a class="costep-link" >
+			<i class="costep-icon"></i>
+			<span class="costep-label">In Progress</span>
+		</a>
+	</div>
+	<div class="col-md-3 costep {%if flow_status=='Delivered' or flow_status=='Delivery In Progress' %}active{%endif%}" data-step="confirm">
+		<a class="costep-link" >
+			<i class="costep-icon"></i>
+			<span class="costep-label">Delivery In Progress</span>
+		</a>
+	</div>
+	<div class="col-md-3 costep {%if flow_status=='Delivered'%}active{%endif%}" data-step="confirm">
+		<a class="costep-link" >
+			<i class="costep-icon"></i>
+			<span class="costep-label">Delivered</span>
+		</a>
+	</div>
+	</div>
+</div>
+<div class="detail-head" style="
+    margin-bottom: 7px;
+    border-bottom: 1px solid #e4e8eb;
+    padding-bottom: 10px;
+    width: calc(100% + 30px);
+    margin-left: -15px;
+    padding-left: 15px;
+"><span class="head-text">Order Summary</span>
+
+
+</div>
+<div class="table-head">
+                     <div class="col-md-7">Item</div>
+                     <div class="col-md-5">
+                        
+                        
+                        <div class="col-md-4 meat-column" style="text-align: center;">
+                           Quantity
+                        </div>
+                       
+                        <div class="col-md-8 meat-column" style="text-align: right">
+                           Total
+                        </div>
+                     </div>
+                  </div>
+    <div class="products-data">
+                     {% for d in doc.items %}
+                     <div class="item-row">
+                     	<div class="col-md-7 col-sm-6 col-xs-12">
+                           {{ item_name_and_description(d) }}
+                        </div>
+                         <div class="col-md-5">
+                        
+                        
+                        	<div class="col-md-4 meat-column" style="text-align: center;">
+                        		<span class="visible-xs">Quantity</span>
+                        		{{ d.qty }}
+                        		<!-- {% if d.delivered_qty is defined and d.delivered_qty != None and d.delivered_qty>0%}
+						<p class="text-success small" style="font-weight:bold">{{ _("Delivered") }}&nbsp;{{ d.delivered_qty }}</p>
+					{% endif %} -->
+                        	</div>
+                        	 <div class="col-md-8 meat-column" style="text-align: right">
+                        	 	<span class="visible-xs">Total</span>
+			                       {{ d.get_formatted("amount")	 }}
+					<p class="text-muted small">{{ _("Rate:") }}&nbsp;{{ d.get_formatted("rate") }}</p>
+			                    </div>
+                        </div>
+                     </div>
+			
+			{% endfor %}
+           <div class="order-payment" style="padding-bottom: 5px;border: none;border-radius: 0;box-shadow: none;margin-top: 0;">
+			<div class="right-row">
+                           <span class="right-row-title">Total Items</span>
+                           <span class="right-row-value">1</span>
+                        </div>
+                        <div class="right-row">
+                           <span class="right-row-title">Item(s) Total</span>
+                           <span class="right-row-value">{{doc.get_formatted("total")}}</span>
+                        </div>
+                         <div class="right-row">
+                           <span class="right-row-title">Grand Total</span>
+                           <span class="right-row-value"> {{doc.get_formatted("grand_total")}}</span>
+                        </div>
+                       {%if doc.indicator_title == "Not Paid and Not Delivered"%}
+                       <div class="right-row" >
+                           <span class="right-row-value" style="
+    width: 100%;
+    font-size: 13px;
+"> <a href="/api/method/erpnext.accounts.doctype.payment_request.payment_request.make_payment_request?dn={{ doc.name }}&dt={{ doc.doctype }}&submit_doc=1&order_type=Shopping Cart"
+										class="btn btn-primary btn-sm"
+										id="pay-for-order" style="float:right">
+										{{ _("Pay") }} {{ doc.get_formatted("grand_total") }}
+									</a></span>
+                        </div>
+                       {%endif%}
+                        </div>  
+                 </div>
+	</div>
+	</div>
+<div class="col-md-4 mobile-pad-0">
+	<div class="order-right-panel">
+               <div class="customer-info">
+                  <span class="detail-head" style="margin-bottom: 10px;">Customer</span>
+                  <div class="right-row">
+                     <div class="customer-info-row">
+                        <i class="fa fa-user"></i>
+                        <span>{{doc.customer}}</span>
+                     </div>
+                  </div>
+                  <div class="right-row">
+                     <div class="customer-info-row">
+                      <a >
+                        <i class="fa fa-envelope"></i>
+                        <span>{{frappe.session.user}}</span>
+                      </a>
+                     </div>
+                  </div>
+
+                  
+                  
+               </div>
+            
+               
+           
+            </div>
+            <div class="order-right-panel" style="margin-top: 15px;padding-bottom: 10px;">
+
+                {%if doc.customer_address%}
+                <span class="detail-head" style="margin-bottom: 10px;">Billing Address</span>
+                 <div class="customer-info-row">
+                     {{doc.address_display}}
+                     </span>
+                  </div>
+                {%endif%}
+                 {%if doc.customer_address%}
+                <div class="separator">
+                  </div>
+                {%endif%}
+                   {%if doc.shipping_address_name%}
+                <span class="detail-head" style="margin-bottom: 10px;">Shipping Address</span>
+                 <div class="customer-info-row">
+                     {{doc.shipping_address}}
+                     </span>
+                  </div>
+                {%endif%}
+            </div>
+</div>
+</div>
+<div style="display: none;">
+	<div class="row transaction-subheading" >
+		<div class="col-6">
+			<span class="font-md indicator-pill {{ doc.indicator_color or ("blue" if doc.docstatus==1 else "darkgrey") }}">
+				{% if doc.doctype == "Quotation" and not doc.docstatus %}
+					{{ _("Pending") }}
+				{% else %}
+					{{ _(doc.get('indicator_title')) or _(doc.status) or _("Submitted") }}
+				{% endif %}
+			</span>
+		</div>
+		<div class="col-6 text-muted text-right small pt-3">
+			{{ frappe.utils.format_date(doc.transaction_date, 'medium') }}
+			{% if doc.valid_till %}
+			<p>
+			{{ _("Valid Till") }}: {{ frappe.utils.format_date(doc.valid_till, 'medium') }}
+			</p>
+			{% endif %}
+		</div>
+	</div>
+
+	<p class="small my-3">
+		{%- set party_name = doc.supplier_name if doc.doctype in ['Supplier Quotation', 'Purchase Invoice', 'Purchase Order'] else doc.customer_name %}
+		<b>{{ party_name }}</b>
+
+		{% if doc.contact_display and doc.contact_display != party_name %}
+			<br>
+			{{ doc.contact_display }}
+		{% endif %}
+	</p>
+
+	{% if doc._header %}
+		{{ doc._header }}
+	{% endif %}
+
+	<div class="order-container">
+		<!-- items -->
+		<table class="order-item-table w-100 table">
+			<thead class="order-items order-item-header">
+				<th width="60%">
+					{{ _("Item") }}
+				</th>
+				<th width="20%" class="text-right">
+					{{ _("Quantity") }}
+				</th>
+				<th width="20%" class="text-right">
+					{{ _("Amount") }}
+				</th>
+			</thead>
+			<tbody>
+			{% for d in doc.items %}
+			<tr class="order-items">
+				<td>
+					{{ item_name_and_description(d) }}
+				</td>
+				<td class="text-right">
+					{{ d.qty }}
+					{% if d.delivered_qty is defined and d.delivered_qty != None %}
+						<p class="text-muted small">{{ _("Delivered") }}&nbsp;{{ d.delivered_qty }}</p>
+					{% endif %}
+				</td>
+				<td class="text-right">
+					{{ d.get_formatted("amount")	 }}
+					<p class="text-muted small">{{ _("Rate:") }}&nbsp;{{ d.get_formatted("rate") }}</p>
+				</td>
+			</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		<!-- taxes -->
+		<div class="order-taxes d-flex justify-content-end">
+			<table>
+				{% include "erpnext/templates/includes/order/order_taxes.html" %}
+			</table>
+		</div>
+	</div>
+
+	{% if enabled_checkout and ((doc.doctype=="Sales Order" and doc.per_billed <= 0)
+		or (doc.doctype=="Sales Invoice" and doc.outstanding_amount > 0)) %}
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<div class="row">
+					<div class="form-column col-sm-6 address-title">
+						<strong>Payment</strong>
+					</div>
+				</div>
+			</div>
+			<div class="panel-collapse">
+				<div class="panel-body text-muted small">
+					<div class="row">
+						<div class="form-column col-sm-6">
+							{% if available_loyalty_points %}
+							<div class="form-group">
+								<div class="h6">Enter Loyalty Points</div>
+								<div class="control-input-wrapper">
+									<div class="control-input">
+										<input class="form-control" type="number" min="0" max="{{ available_loyalty_points }}" id="loyalty-point-to-redeem">
+									</div>
+									<p class="help-box small text-muted d-none d-sm-block"> Available Points: {{ available_loyalty_points }} </p>
+								</div>
+							</div>
+							{% endif %}
+						</div>
+
+						<div class="form-column col-sm-6">
+							<div id="loyalty-points-status" style="text-align: right"></div>
+							<div class="page-header-actions-block" data-html-block="header-actions">
+								<p class="mt-2" style="float: right;">
+									<a href="/api/method/erpnext.accounts.doctype.payment_request.payment_request.make_payment_request?dn={{ doc.name }}&dt={{ doc.doctype }}&submit_doc=1&order_type=Shopping Cart"
+										class="btn btn-primary btn-sm"
+										id="pay-for-order">
+										{{ _("Pay") }} {{ doc.get_formatted("grand_total") }}
+									</a>
+								</p>
+							</div>
+						</div>
+
+					</div>
+
+				</div>
+			</div>
+		</div>
+	{% endif %}
+
+
+	{% if attachments %}
+		<div class="order-item-table">
+			<div class="row order-items order-item-header text-muted">
+				<div class="col-sm-12 h6 text-uppercase">
+					{{ _("Attachments") }}
+				</div>
+			</div>
+			<div class="row order-items">
+				<div class="col-sm-12">
+					{% for attachment in attachments %}
+					<p class="small">
+						<a href="{{ attachment.file_url }}" target="blank"> {{ attachment.file_name }} </a>
+					</p>
+					{% endfor %}
+				</div>
+			</div>
+		</div>
+	{% endif %}
+	</div>
+</div>
+	{% if doc.terms %}
+		<div class="terms-and-condition text-muted small">
+			<hr><p>{{ doc.terms }}</p>
+		</div>
+	{% endif %}
+
+<style type="text/css">
+	.order-left-panel, .order-payment, .order-right-panel {
+    float: left;
+    width: 100%;
+    background: #fff;
+    padding: 10px 15px;
+    box-shadow: 0 0 2px #d1d8dd;
+    border-radius: 5px;
+    padding-bottom: 0;
+    margin-top: 15px;font-size: 14px;
+}
+.no-gutters {
+    margin-right: 0;
+    margin-left: 0;
+    float: left;
+    margin-bottom: 10px;
+    width: calc(100% + 30px);
+    /* max-width: 100%; */
+    margin-left: -15px;
+    border-bottom: 1px solid #e4e8eb;
+    padding-bottom: 15px;
+    margin-top: 5px;
+}
+.order-progress-bar {
+    float: left;
+    width: 100%;
+    /* background: #fff; */
+    margin-left: 15px;
+}
+.col-md-3.costep {
+    width: 20%;
+    max-width: 20%;
+    flex: 0 0 20%;
+    float: left;padding:0;text-align: center;
+}
+.costep, .costep-link, .costep-icon {
+    display: block;
+    position: relative;
+    z-index: 1;
+}
+.costep, .costep-link, .costep-icon {
+    display: block;
+    position: relative;
+    z-index: 1;
+}
+.costep:before, .costep:after {
+    display: block;
+    content: ' ';
+    position: absolute;
+    height: 2px;
+    background-color: #d3d3d3;
+    z-index: 0;
+    top: 5px;
+}
+.costep:after {
+    left: 50%;
+    right: 0;
+}
+.costep:before {
+    left: 0;
+    right: 50%;
+}
+.col-md-3.costep:first-child::before{
+	content: none;
+}
+.costep:before, .costep:after {
+    top: 12px;
+}
+.costep.active:before, .costep.active:after {
+    background-color: #28a745;
+}
+.costep, .costep-link, .costep-icon {
+    display: block;
+    position: relative;
+    z-index: 1;
+}
+i.costep-icon {
+    width: 25px;
+    height: 25px;
+    background: #ccc;
+    border-radius: 50%;
+    display: inline-block;
+}
+.col-md-3.costep.active i.costep-icon {
+    background-color: #28a745;
+}
+.costep-label {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 13px;
+    display: block;
+    padding: 0.5rem 3px 0 3px;
+    color: #cccccc;
+        white-space: initial;
+}
+span.costep-label {
+    width: 100%;
+    float: left;
+}
+.col-md-3.costep.active .costep-label {
+    margin-top: 5px;
+    color: #222;
+}
+.col-md-3.costep.active i.costep-icon::before {
+    content: "\f00c";
+    display: inline-block;
+    font: normal normal normal 13px/1 FontAwesome;
+    color: #fff;
+    padding-top: 6px;
+}
+.col-md-3.costep:last-child::after{
+	content: none;
+}
+.products-table {
+    float: left;
+    width: calc(100% + 30px);
+    margin-top: 0px;
+    margin-left: -15px;
+}
+.table-head {
+    font-weight: 500;
+    border-bottom: 1px solid #e4e8eb;
+    float: left;
+    width: calc(100% + 30px);
+    padding-bottom: 10px;
+    margin-left: -15px;
+}
+.item-row {
+   float: left;
+    width: 100%;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e4e8eb;
+    padding-top: 10px;
+    width: calc(100% + 30px);
+    margin-left: -15px;
+    padding-left: 15px;
+}
+.order-payment{
+	 width: calc(100% + 30px);
+    margin-left: -15px;
+    padding-left: 15px;
+}
+.right-row {
+    float: left;
+    width: 100%;
+    margin: 5px 0 10px 0;
+}
+span.right-row-title {
+    float: left;
+    width: 75%;
+    text-align: right;
+    font-weight: 500;
+}
+span.right-row-value {
+    text-align: right;
+    float: left;
+    width: 25%;
+}
+.col-xs-4.col-sm-2.order-image-col {
+    padding: 0;
+}
+.customer-info {
+    padding-bottom: 15px;
+}
+span.detail-head {
+    float: left;
+    width: 100%;
+    font-size: 15px;
+    font-weight: 500;
+}
+.customer-info-row {
+    float: left;
+    width: 100%;
+}
+.customer-info-row i {
+    margin-right: 5px;
+}
+.separator {
+    float: left;
+    width: 100%;
+    border-top: 1px solid #e4e8eb;
+    margin-bottom: 10px;
+    margin-top: 10px;
+}
+.col-1, .col-xs-1, .col-2, .col-xs-2, .col-3, .col-xs-3, .col-4, .col-xs-4, .col-5, .col-xs-5, .col-6, .col-xs-6, .col-7, .col-xs-7, .col-8, .col-xs-8, .col-9, .col-xs-9, .col-10, .col-xs-10, .col-11, .col-xs-11, .col-12, .col-xs-12, .col, .col-auto, .col-sm-1, .col-sm-2, .col-sm-3, .col-sm-4, .col-sm-5, .col-sm-6, .col-sm-7, .col-sm-8, .col-sm-9, .col-sm-10, .col-sm-11, .col-sm-12, .col-sm, .col-sm-auto, .col-md-1, .col-md-2, .col-md-3, .col-md-4, .col-md-5, .col-md-6, .col-md-7, .col-md-8, .col-md-9, .col-md-10, .col-md-11, .col-md-12, .col-md, .col-md-auto, .col-lg-1, .col-lg-2, .col-lg-3, .col-lg-4, .col-lg-5, .col-lg-6, .col-lg-7, .col-lg-8, .col-lg-9, .col-lg-10, .col-lg-11, .col-lg-12, .col-lg, .col-lg-auto, .col-xl-1, .col-xl-2, .col-xl-3, .col-xl-4, .col-xl-5, .col-xl-6, .col-xl-7, .col-xl-8, .col-xl-9, .col-xl-10, .col-xl-11, .col-xl-12, .col-xl, .col-xl-auto, .col-2xl-1, .col-2xl-2, .col-2xl-3, .col-2xl-4, .col-2xl-5, .col-2xl-6, .col-2xl-7, .col-2xl-8, .col-2xl-9, .col-2xl-10, .col-2xl-11, .col-2xl-12, .col-2xl, .col-2xl-auto{float: left;}
+@media screen and (max-width:768px) {
+	.mobile-pad-0{padding: 0;}
+	.order-progress-bar{margin-left: -5px;}
+	.col-md-3.costep {
+    width: 25%;
+    max-width: 25%;
+    flex: 0 0 25%;
+    float: left;
+    padding: 0;
+    text-align: center;
+}
+.table-head{display: none;}
+.col-md-4.meat-column,.col-md-8.meat-column{width: 50%;}
+.col-md-4.meat-column {
+    padding-top: 8px;
+    text-align: left !important;
+    padding: 20px 0 0 0;
+}
+span.visible-xs {
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+.col-md-8.meat-column {
+    padding-top: 15px;
+}
+.item-row .col-md-5{padding: 0;}
+}
+
+</style>
+
+{% endblock %}
+
+{% block script %}
+	<script> {% include "templates/pages/order.js" %} </script>
+	<script>
+		window.doc_info = {
+			customer: '{{doc.customer}}',
+			doctype: '{{ doc.doctype }}',
+			doctype_name: '{{ doc.name }}',
+			grand_total: '{{ doc.grand_total }}',
+			currency: '{{ doc.currency }}'
+		}
+	</script>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "templates/web.html" %}
+
+{% block title %} Payment {% endblock %}
+
+{%- block header -%}{% endblock %}
+
+{% block script %}
+<script type="text/javascript">
+
+$(document).ready(function(){
+	 window.location.href="{{redirect_url}}"
+	
+})
+</script>
+{% endblock %}
+
+{%- block page_content -%}
+
+<p class='lead text-center centered'>
+	<div class="loading">
+		Please wait we are redirecting... 
+	</div>
+
+</p>
+
+{% endblock %}
+
+{% block style %}
+<style>
+	header, footer ,nav.navbar.navbar-light.navbar-expand-lg{
+		display: none;
+	}
+.loading {
+    text-align: center;
+    margin-top: 20%;
+}
+
+</style>
+{% endblock %}
